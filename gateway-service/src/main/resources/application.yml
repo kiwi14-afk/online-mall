@@ -67,7 +67,7 @@ spring:
 
 # JWT 配置
 jwt:
-  secret: online-mall-secret-key-2026-software-service-engineering
+  secret: online-mall-jwt-secret-key-2026-software-service-engineering
   expire-hours: 24
 
 # 白名单路径（不需要JWT鉴权）

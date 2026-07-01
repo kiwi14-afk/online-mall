@@ -27,6 +27,7 @@ public class JwtUtils {
 
         return Jwts.builder()
                 .subject(userId.toString())
+                .claim("userId", userId)
                 .claim("username", username)
                 .issuedAt(now)
                 .expiration(expiryDate)

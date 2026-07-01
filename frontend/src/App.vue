@@ -108,15 +108,19 @@ onMounted(() => {
 /* ========== DESIGN SYSTEM : CSS Custom Properties ========== */
 :root {
   --color-bg:       #FAF8F5;
+  --color-bg-alt:   #F0ECE6;
   --color-surface:  #FFFFFF;
+  --color-surface-dark: #1E1E1E;
   --color-text:     #1A1A1A;
+  --color-text-on-dark: #F0EDE8;
   --color-text-dim: #6B6B6B;
   --color-text-sub: #999999;
   --color-accent:   #2D2D2D;
   --color-accent-hover: #4A4A4A;
   --color-highlight: #C8553D;
-  --color-border:   #E8E4DF;
-  --color-border-light: #F0EDE9;
+  --color-highlight-dim: #F5E0D8;
+  --color-border:   #E0DBD4;
+  --color-border-light: #EDE9E3;
   --color-success:  #5B8C5A;
   --font-display:   'Noto Serif SC', 'SimSun', 'STSong', serif;
   --font-body:      'Inter', 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
@@ -124,10 +128,16 @@ onMounted(() => {
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 16px;
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
-  --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.10);
+  --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* ========== SECTION HELPERS ========== */
+.section-divider { height: 1px; background: var(--color-border); margin: 0; border: none; }
+.section-alt { background: var(--color-bg-alt); }
+.section-dark { background: var(--color-surface-dark); color: var(--color-text-on-dark); }
 
 /* ========== RESET ========== */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
