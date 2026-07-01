@@ -1,0 +1,65 @@
+# ============================================
+# Sentinel 流量防护规则
+# ============================================
+# 可通过 Sentinel Dashboard (http://localhost:8858) 手动配置
+# 或启动后通过 API 自动注册到对应服务
+# ============================================
+
+# ========== 1. 降级规则（order-service 调用 product-service 时） ==========
+# 当 product-service 响应时间 > 500ms 或异常率 > 50% 时触发降级
+# 降级后调用 ProductClientFallback 返回 "商品服务繁忙，请稍后重试"
+
+# 规则 JSON（可通过 Sentinel Dashboard 导入）:
+{
+  "degradeRules": [
+    {
+      "resource": "GET:http://product-service/api/product/batch",
+      "grade": 0,              # 0=慢调用比例, 1=异常比例, 2=异常数
+      "count": 500,            # 阈值（ms 或 比例）
+      "timeWindow": 10,        # 熔断时长（秒）
+      "minRequestAmount": 5,   # 最小请求数
+      "statIntervalMs": 1000,  # 统计窗口（ms）
+      "slowRatioThreshold": 0.5
+    },
+    {
+      "resource": "PUT:http://product-service/api/product/{id}/stock/deduct",
+      "grade": 1,
+      "count": 0.5,
+      "timeWindow": 10,
+      "minRequestAmount": 5,
+      "statIntervalMs": 1000
+    },
+    {
+      "resource": "PUT:http://product-service/api/product/{id}/stock/rollback",
+      "grade": 1,
+      "count": 0.5,
+      "timeWindow": 10,
+      "minRequestAmount": 5,
+      "statIntervalMs": 1000
+    },
+    {
+      "resource": "GET:http://user-service/api/user/validate/{id}",
+      "grade": 1,
+      "count": 0.5,
+      "timeWindow": 10,
+      "minRequestAmount": 5,
+      "statIntervalMs": 1000
+    }
+  ],
+
+  "flowRules": [
+    # ========== 2. 网关层限流规则（Gateway） ==========
+    {
+      "resource": "order-service-route",
+      "grade": 1,              # 0=线程数, 1=QPS
+      "count": 10,             # QPS 上限
+      "controlBehavior": 0     # 0=直接拒绝, 1=Warm Up, 2=匀速排队
+    },
+    {
+      "resource": "payment-service-route",
+      "grade": 1,
+      "count": 20,
+      "controlBehavior": 0
+    }
+  ]
+}

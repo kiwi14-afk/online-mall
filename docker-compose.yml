@@ -1,0 +1,255 @@
+version: '3.8'
+
+# ============================================
+# 在线商城系统 - Docker Compose 编排
+# 包含：4个业务服务 + Gateway + Nacos + Sentinel + MySQL×4 + Seata
+# ============================================
+
+services:
+  # ==================== MySQL 数据库 ====================
+  mysql-user:
+    image: mysql:8.0
+    container_name: mysql-user
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: user_db
+      TZ: Asia/Shanghai
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./sql/user_db.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql-user-data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mall-net
+
+  mysql-product:
+    image: mysql:8.0
+    container_name: mysql-product
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: product_db
+      TZ: Asia/Shanghai
+    ports:
+      - "3308:3306"
+    volumes:
+      - ./sql/product_db.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql-product-data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mall-net
+
+  mysql-order:
+    image: mysql:8.0
+    container_name: mysql-order
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: order_db
+      TZ: Asia/Shanghai
+    ports:
+      - "3309:3306"
+    volumes:
+      - ./sql/order_db.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql-order-data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mall-net
+
+  mysql-payment:
+    image: mysql:8.0
+    container_name: mysql-payment
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: payment_db
+      TZ: Asia/Shanghai
+    ports:
+      - "3310:3306"
+    volumes:
+      - ./sql/payment_db.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql-payment-data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - mall-net
+
+  # ==================== Nacos 注册发现 & 配置中心 ====================
+  nacos:
+    image: nacos/nacos-server:v2.2.3
+    container_name: nacos
+    environment:
+      MODE: standalone
+      PREFER_HOST_MODE: hostname
+      SPRING_DATASOURCE_PLATFORM: mysql
+      MYSQL_SERVICE_HOST: mysql-user  # 复用 user 的 MySQL 存 Nacos 配置
+      MYSQL_SERVICE_PORT: 3306
+      MYSQL_SERVICE_DB_NAME: nacos_config
+      MYSQL_SERVICE_USER: root
+      MYSQL_SERVICE_PASSWORD: root123
+      MYSQL_SERVICE_DB_PARAM: useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=utf8
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+    depends_on:
+      mysql-user:
+        condition: service_healthy
+    networks:
+      - mall-net
+
+  # ==================== Sentinel 流量防护控制台 ====================
+  sentinel:
+    image: bladex/sentinel-dashboard:1.8.6
+    container_name: sentinel
+    environment:
+      SERVER_PORT: 8858
+    ports:
+      - "8858:8858"
+    networks:
+      - mall-net
+
+  # ==================== Seata 分布式事务 ====================
+  seata-server:
+    image: seataio/seata-server:1.7.1
+    container_name: seata-server
+    environment:
+      SEATA_PORT: 8091
+      STORE_MODE: db
+      SEATA_IP: seata-server
+    ports:
+      - "8091:8091"
+      - "7091:7091"
+    volumes:
+      - ./seata/application.yml:/seata-server/resources/application.yml
+    depends_on:
+      mysql-order:
+        condition: service_healthy
+    networks:
+      - mall-net
+
+  # ==================== 业务微服务 ====================
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    ports:
+      - "8081:8081"
+    depends_on:
+      mysql-user:
+        condition: service_healthy
+      nacos:
+        condition: service_started
+    networks:
+      - mall-net
+
+  product-service:
+    build:
+      context: ./product-service
+      dockerfile: Dockerfile
+    container_name: product-service
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    ports:
+      - "8082:8082"
+    depends_on:
+      mysql-product:
+        condition: service_healthy
+      nacos:
+        condition: service_started
+    networks:
+      - mall-net
+
+  order-service:
+    build:
+      context: ./order-service
+      dockerfile: Dockerfile
+    container_name: order-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      mysql-order:
+        condition: service_healthy
+      nacos:
+        condition: service_started
+      seata-server:
+        condition: service_started
+    networks:
+      - mall-net
+
+  payment-service:
+    build:
+      context: ./payment-service
+      dockerfile: Dockerfile
+    container_name: payment-service
+    ports:
+      - "8084:8084"
+    depends_on:
+      mysql-payment:
+        condition: service_healthy
+      nacos:
+        condition: service_started
+      seata-server:
+        condition: service_started
+    networks:
+      - mall-net
+
+  gateway-service:
+    build:
+      context: ./gateway-service
+      dockerfile: Dockerfile
+    container_name: gateway-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      - nacos
+      - user-service
+      - product-service
+      - order-service
+      - payment-service
+    networks:
+      - mall-net
+
+  # ==================== 前端 (Person A) ====================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - gateway-service
+    networks:
+      - mall-net
+
+# ==================== 网络 ====================
+networks:
+  mall-net:
+    driver: bridge
+
+# ==================== 数据卷 ====================
+volumes:
+  mysql-user-data:
+  mysql-product-data:
+  mysql-order-data:
+  mysql-payment-data:
