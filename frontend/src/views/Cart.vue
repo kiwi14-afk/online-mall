@@ -6,8 +6,8 @@
       <div v-if="cart.length > 0">
         <div class="cart-list">
           <div v-for="(item, index) in cart" :key="item.id" class="cart-item">
-            <div class="cart-item-img" @click="$router.push(`/product/${item.id}`)">
-              <img :src="item.imageUrl || 'https://placehold.co/120x120/FAF8F5/1A1A1A?text=?'" :alt="item.name" />
+            <div class="cart-item-img" @click="$router.push(`/product/${item.id}`)" :style="{ background: cartGradients[(item.id || 1) % cartGradients.length] }">
+              <span class="cart-placeholder-char">{{ item.name?.charAt(0) || '?' }}</span>
             </div>
             <div class="cart-item-body" @click="$router.push(`/product/${item.id}`)">
               <h4>{{ item.name }}</h4>
@@ -45,6 +45,14 @@ import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 const cart = ref([])
+const cartGradients = [
+  'linear-gradient(135deg, #E8E0D8 0%, #D5CCC0 100%)',
+  'linear-gradient(135deg, #D8E4E0 0%, #C5D2CC 100%)',
+  'linear-gradient(135deg, #E8DBD5 0%, #D8C8C0 100%)',
+  'linear-gradient(135deg, #E0D8E4 0%, #D0C8D8 100%)',
+  'linear-gradient(135deg, #D8E0E8 0%, #C8D0DC 100%)',
+  'linear-gradient(135deg, #E4D8E0 0%, #D4C8D0 100%)',
+]
 
 const totalPrice = computed(() => cart.value.reduce((sum, item) => sum + item.price * item.quantity, 0))
 
@@ -82,9 +90,17 @@ onMounted(() => { cart.value = JSON.parse(localStorage.getItem('mall_cart') || '
 }
 .cart-item:last-child { border-bottom: none; }
 .cart-item:hover { background: #FAFAF8; }
-.cart-item-img { width: 90px; height: 90px; border-radius: var(--radius-sm); overflow: hidden; cursor: pointer; background: #E8E4DF; flex-shrink: 0; border: 1px solid var(--color-border-light); }
-.cart-item-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
-.cart-item-img:hover img { transform: scale(1.06); }
+.cart-item-img {
+  width: 90px; height: 90px; border-radius: var(--radius-sm); overflow: hidden;
+  cursor: pointer; flex-shrink: 0; border: 1px solid var(--color-border-light);
+  display: flex; align-items: center; justify-content: center;
+}
+.cart-placeholder-char {
+  font-family: var(--font-display); font-size: 36px; font-weight: 700;
+  color: rgba(255,255,255,0.7); user-select: none;
+}
+.cart-item-img:hover { border-color: #c0b8ae; }
+.cart-item-img:hover .cart-placeholder-char { color: rgba(255,255,255,0.9); }
 .cart-item-body { flex: 1; cursor: pointer; min-width: 0; }
 .cart-item-body h4 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
 .cart-item-price { font-size: 13px; color: var(--color-text-sub); }

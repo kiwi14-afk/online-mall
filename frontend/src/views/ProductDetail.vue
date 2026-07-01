@@ -4,8 +4,9 @@
       <div class="detail-grid" v-if="product">
         <!-- Image -->
         <div class="detail-gallery">
-          <div class="gallery-main">
-            <img :src="product.imageUrl || 'https://placehold.co/600x600/FAF8F5/1A1A1A?text=' + product.name?.charAt(0)" :alt="product.name" />
+          <div class="gallery-main" :style="{ background: detailGradient }">
+            <span class="gallery-char">{{ product.name?.charAt(0) || '?' }}</span>
+            <el-icon class="gallery-icon" :size="80" color="rgba(255,255,255,0.2)"><component :is="detailIcon" /></el-icon>
           </div>
         </div>
 
@@ -52,10 +53,24 @@ import { useRoute } from 'vue-router'
 import { getProductDetail } from '../api/product'
 import { ElMessage } from 'element-plus'
 
+import { computed } from 'vue'
+
 const route = useRoute()
 const product = ref(null)
 const quantity = ref(1)
 const loading = ref(false)
+
+const detailGrads = [
+  'linear-gradient(135deg, #E8E0D8 0%, #D5CCC0 100%)',
+  'linear-gradient(135deg, #D8E4E0 0%, #C5D2CC 100%)',
+  'linear-gradient(135deg, #E8DBD5 0%, #D8C8C0 100%)',
+  'linear-gradient(135deg, #E0D8E4 0%, #D0C8D8 100%)',
+  'linear-gradient(135deg, #D8E0E8 0%, #C8D0DC 100%)',
+  'linear-gradient(135deg, #E4D8E0 0%, #D4C8D0 100%)',
+]
+const detailIcons = ['Monitor', 'Reading', 'Present', 'ForkSpoon', 'Headset', 'MagicStick']
+const detailGradient = computed(() => product.value ? detailGrads[(product.value.categoryId || 1) % detailGrads.length] : detailGrads[0])
+const detailIcon = computed(() => product.value ? detailIcons[(product.value.categoryId || 1) % detailIcons.length] : detailIcons[0])
 
 function addToCart() {
   const cart = JSON.parse(localStorage.getItem('mall_cart') || '[]')
@@ -88,8 +103,16 @@ onMounted(async () => {
 .page { padding: 48px 0; }
 .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; }
 .detail-gallery { position: sticky; top: 80px; }
-.gallery-main { aspect-ratio: 1; border-radius: var(--radius-md); overflow: hidden; background: #E8E4DF; border: 1px solid var(--color-border-light); }
-.gallery-main img { width: 100%; height: 100%; object-fit: cover; }
+.gallery-main {
+  aspect-ratio: 1; border-radius: var(--radius-md); overflow: hidden;
+  border: 1px solid var(--color-border-light);
+  display: flex; align-items: center; justify-content: center; position: relative;
+}
+.gallery-char {
+  font-family: var(--font-display); font-size: 140px; font-weight: 700;
+  color: rgba(255,255,255,0.6); z-index: 1; user-select: none;
+}
+.gallery-icon { position: absolute; bottom: 24px; right: 24px; z-index: 1; opacity: 0.5; }
 
 .breadcrumb { font-size: 13px; color: var(--color-text-sub); margin-bottom: 20px; display: flex; gap: 8px; align-items: center; }
 .breadcrumb a:hover { color: var(--color-text); }

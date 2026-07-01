@@ -20,9 +20,10 @@
           class="product-card"
           @click="$router.push(`/product/${product.id}`)"
         >
-          <div class="product-image-wrap">
-            <img :src="product.imageUrl || 'https://placehold.co/600x600/FAF8F5/1A1A1A?text=' + product.name?.charAt(0)" :alt="product.name" loading="lazy" />
-            <div class="product-overlay"><span class="overlay-text">查看详情</span></div>
+          <div class="product-image-wrap" :style="{ background: gradients[(product.categoryId || 1) % gradients.length] }">
+            <span class="placeholder-char">{{ product.name?.charAt(0) || '?' }}</span>
+            <el-icon class="placeholder-icon" :size="48" color="rgba(255,255,255,0.25)"><component :is="icons[(product.categoryId || 1) % icons.length]" /></el-icon>
+            <div class="product-overlay"><span class="overlay-text">查看详情 →</span></div>
           </div>
           <div class="product-meta">
             <h3>{{ product.name }}</h3>
@@ -52,6 +53,15 @@ const route = useRoute()
 const searchKeyword = ref('')
 const selectedCategory = ref(null)
 const products = ref([])
+const gradients = [
+  'linear-gradient(135deg, #E8E0D8 0%, #D5CCC0 100%)',
+  'linear-gradient(135deg, #D8E4E0 0%, #C5D2CC 100%)',
+  'linear-gradient(135deg, #E8DBD5 0%, #D8C8C0 100%)',
+  'linear-gradient(135deg, #E0D8E4 0%, #D0C8D8 100%)',
+  'linear-gradient(135deg, #D8E0E8 0%, #C8D0DC 100%)',
+  'linear-gradient(135deg, #E4D8E0 0%, #D4C8D0 100%)',
+]
+const icons = ['Monitor', 'Reading', 'Present', 'ForkSpoon', 'Headset', 'MagicStick']
 const categories = ref([])
 const total = ref(0)
 const currentPage = ref(1)
@@ -95,12 +105,16 @@ onMounted(async () => {
 .product-card { cursor: pointer; }
 .product-image-wrap {
   position: relative; aspect-ratio: 1; overflow: hidden;
-  border-radius: var(--radius-md); background: #E8E4DF;
-  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md); border: 1px solid var(--color-border-light);
+  display: flex; align-items: center; justify-content: center;
 }
-.product-image-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
-.product-card:hover .product-image-wrap img { transform: scale(1.05); }
-.product-card:hover .product-image-wrap { border-color: #ccc; box-shadow: var(--shadow-sm); }
+.placeholder-char {
+  font-family: var(--font-display); font-size: 64px; font-weight: 700;
+  color: rgba(255,255,255,0.7); z-index: 1; user-select: none;
+}
+.placeholder-icon { position: absolute; bottom: 12px; right: 12px; z-index: 1; opacity: 0.6; }
+.product-card:hover .product-image-wrap { border-color: #c0b8ae; box-shadow: var(--shadow-sm); }
+.product-card:hover .placeholder-char { color: rgba(255,255,255,0.9); }
 .product-overlay {
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
   background: rgba(0,0,0,0.3); opacity: 0; transition: opacity var(--transition);

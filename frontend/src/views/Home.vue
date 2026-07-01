@@ -75,9 +75,9 @@
           <article v-for="product in products" :key="product.id" class="product-card"
                    @click="$router.push(`/product/${product.id}`)">
             <div class="product-badge" v-if="product.stock > 0 && product.stock < 20">热卖</div>
-            <div class="product-image-wrap">
-              <img :src="'https://placehold.co/600x600/E8E4DF/2D2D2D?text=' + encodeURIComponent(product.name || '?')"
-                   :alt="product.name" loading="lazy" />
+            <div class="product-image-wrap" :style="{ background: imageBg(product) }">
+              <span class="placeholder-char">{{ product.name?.charAt(0) || '?' }}</span>
+              <el-icon class="placeholder-icon" :size="48" color="rgba(255,255,255,0.25)"><component :is="imageIcon(product)" /></el-icon>
               <div class="product-overlay"><span class="overlay-text">查看详情 →</span></div>
             </div>
             <div class="product-meta">
@@ -102,9 +102,23 @@ const router = useRouter()
 const keyword = ref('')
 const products = ref([])
 const categories = ref([])
-const catIcons = ['Monitor', 'Reading', 'Present', 'ForkSpoon', 'VideoGame', 'MagicStick']
+const catIcons = ['Monitor', 'Reading', 'Present', 'ForkSpoon', 'Headset', 'MagicStick']
 const catColors = ['#4A90D9', '#5B8C5A', '#C8553D', '#E8953A', '#7B68EE', '#D4728A']
 const catCounts = ['1,200+ 件', '890+ 件', '650+ 件', '430+ 件', '320+ 件', '280+ 件']
+const productGradients = [
+  'linear-gradient(135deg, #E8E0D8 0%, #D5CCC0 100%)',
+  'linear-gradient(135deg, #D8E4E0 0%, #C5D2CC 100%)',
+  'linear-gradient(135deg, #E8DBD5 0%, #D8C8C0 100%)',
+  'linear-gradient(135deg, #E0D8E4 0%, #D0C8D8 100%)',
+  'linear-gradient(135deg, #D8E0E8 0%, #C8D0DC 100%)',
+  'linear-gradient(135deg, #E4D8E0 0%, #D4C8D0 100%)',
+]
+
+function imageBg(product) { return productGradients[(product.categoryId || 1) % productGradients.length] }
+function imageIcon(product) {
+  const icons = ['Monitor', 'Reading', 'Present', 'ForkSpoon', 'Headset', 'MagicStick']
+  return icons[(product.categoryId || 1) % icons.length]
+}
 
 function search() {
   if (keyword.value.trim()) router.push({ path: '/products', query: { keyword: keyword.value } })
@@ -166,10 +180,18 @@ onMounted(async () => {
 .product-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
 .product-card { cursor: pointer; position: relative; }
 .product-badge { position: absolute; top: 10px; left: 10px; z-index: 5; background: var(--color-highlight); color: #fff; font-size: 11px; padding: 2px 10px; border-radius: 2px; font-weight: 600; }
-.product-image-wrap { position: relative; aspect-ratio: 1; overflow: hidden; border-radius: var(--radius-md); background: #E8E4DF; border: 1px solid var(--color-border-light); }
-.product-image-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
-.product-card:hover .product-image-wrap img { transform: scale(1.05); }
-.product-card:hover .product-image-wrap { border-color: #ccc; }
+.product-image-wrap {
+  position: relative; aspect-ratio: 1; overflow: hidden;
+  border-radius: var(--radius-md); border: 1px solid var(--color-border-light);
+  display: flex; align-items: center; justify-content: center;
+}
+.placeholder-char {
+  font-family: var(--font-display); font-size: 64px; font-weight: 700;
+  color: rgba(255,255,255,0.7); z-index: 1; user-select: none;
+}
+.placeholder-icon { position: absolute; bottom: 12px; right: 12px; z-index: 1; opacity: 0.6; }
+.product-card:hover .product-image-wrap { border-color: #c0b8ae; box-shadow: var(--shadow-sm); }
+.product-card:hover .placeholder-char { color: rgba(255,255,255,0.9); }
 .product-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); opacity: 0; transition: opacity var(--transition); border-radius: var(--radius-md); }
 .product-card:hover .product-overlay { opacity: 1; }
 .overlay-text { font-size: 14px; color: #fff; font-weight: 600; letter-spacing: 0.03em; }
